@@ -1,5 +1,7 @@
 #include "SessionFile.h"
 
+#include "json.hpp"
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -14,5 +16,5 @@ int main(int argc, char **argv) {
         return 1;
     }
     auto file = load_session(args[1]);
-    std::cout << file << '\n';
+    std::cout << nlohmann::json(file) << '\n';
 }

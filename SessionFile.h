@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "json.hpp"
+
 namespace CoolEdit
 {
 
@@ -40,18 +42,17 @@ struct Tempo
 
 struct Session
 {
+    unsigned sample_rate;
+    unsigned master_volume;
+    std::string filename;
     Tempo tempo;
     std::vector<Track> tracks;
     std::vector<Wave> waves;
     std::vector<Block> blocks;
 };
 
-std::ostream &operator<<(std::ostream &os, Block const &);
-std::ostream &operator<<(std::ostream &os, Session const &);
-std::ostream &operator<<(std::ostream &os, Tempo const &);
-std::ostream &operator<<(std::ostream &os, Track const &);
-std::ostream &operator<<(std::ostream &os, Wave const &);
-
 Session load_session(std::string const &path);
+
+void to_json(nlohmann::json &j, Session const &);
 
 } // namespace CoolEdit

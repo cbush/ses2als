@@ -2,11 +2,19 @@
 
 #include "log.h"
 
+#include "json.hpp"
+
 #include <cstdint>
 #include <fstream>
 
 namespace CoolEdit
 {
+
+#if LOG
+auto &logger = std::cout;
+#else
+std::ofstream logger;
+#endif
 
 using BYTE = uint8_t;
 using WORD = uint16_t;
@@ -64,7 +72,7 @@ PACKED_STRUCT Header
     DWORD session_time_offset_samples;
     BOOL save_associated_files_separately;
     BOOL priv;
-    BYTE filename[256];
+    char filename[256];
     BYTE unknown[44];
 };
 
@@ -187,18 +195,19 @@ std::ostream &operator<<(std::ostream &os, WaveListEntryBlock const &block)
 
 std::string read_block_header(std::istream &in)
 {
-    BYTE header[4];
+    char header[4];
     CHECKED_READ(header, in);
-    return {(char *)header, 4};
+    return {header, 4};
 }
 
 bool read(WaveListEntryBlock &block, std::istream &in, size_t length)
 {
     read(block.id, in);
     read(block.nineteen, in);
-    length -= sizeof(DWORD) * 4;
+    length -= sizeof(DWORD) * 4 + 1;
     block.filename.resize(length);
     in.read(&block.filename[0], length);
+    in.get();
     read(block.unused, in);
     return true;
 }
@@ -207,37 +216,47 @@ Header read_header(std::istream &in)
 {
     Header header{};
     CHECKED_READ(header, in);
-    std::cout << header << '\n';
+    logger << header << '\n';
     return header;
+}
+
+std::string get_clean_string(const char *s, size_t count)
+{
+    std::string string(s, count);
+    string.erase(find(string.begin(), string.end(), '\0'), string.end());
+    return string;
 }
 
 std::string read_block(Session &session, std::istream &in)
 {
     auto header = read_block_header(in);
-    std::cout << "Block header: " << header << '\n';
+    logger << "Block header: " << header << '\n';
     
     if (header == "LIST")
     {
         header = read_block_header(in);
-        std::cout << "Block header 2: " << header << '\n';
+        logger << "Block header 2: " << header << '\n';
         EXPECT_EQ("FILE", header);
     }
 
     DWORD length{};
     read(length, in);
-    std::cout << "Block length: " << length << '\n';
+    logger << "Block length: " << length << '\n';
 
     auto previous_tellg = (int)in.tellg();
 
     if (header == "hdr ")
     {
-        read_header(in);
+        auto block = read_header(in);
+        session.sample_rate = block.sample_rate;
+        session.master_volume = block.master_volume;
+        session.filename = get_clean_string(block.filename, sizeof(block.filename));
     }
     else if (header == "tmpo")
     {
         TempoBlock tempo{};
         CHECKED_READ(tempo, in);
-        std::cout << tempo << '\n';
+        logger << tempo << '\n';
         session.tempo.beats_per_minute = tempo.beats_per_minute;
         session.tempo.beats_per_bar = (unsigned)tempo.beats_per_bar;
         session.tempo.ticks_per_beat = (unsigned)tempo.ticks_per_beat;
@@ -246,16 +265,16 @@ std::string read_block(Session &session, std::istream &in)
     {
         DWORD count{};
         read(count, in);
-        std::cout << "Track count: " << count << '\n';
+        logger << "Track count: " << count << '\n';
         for (auto i = 0; i < count; ++i)
         {
             TrackBlock block;
             CHECKED_READ(block, in);
-            std::cout << block << '\n';
+            logger << block << '\n';
             Track track{};
             track.left_volume = block.left_volume;
             track.right_volume = block.right_volume;
-            track.title = {block.title, sizeof(block.title)};
+            track.title = get_clean_string(block.title, sizeof(block.title));
             track.mute = block.flags & 1;
             session.tracks.push_back(std::move(track));
         }
@@ -269,7 +288,7 @@ std::string read_block(Session &session, std::istream &in)
     {
         WaveListEntryBlock block;
         read(block, in, length);
-        std::cout << block << '\n';
+        logger << block << '\n';
         Wave wave{};
         wave.id = block.id;
         wave.filename = block.filename;
@@ -279,12 +298,12 @@ std::string read_block(Session &session, std::istream &in)
     {
         DWORD count{};
         read(count, in);
-        std::cout << "Block count: " << count << '\n';
+        logger << "Block count: " << count << '\n';
         for (auto i = 0; i < count; ++i)
         {
             WaveBlockBlock block;
             CHECKED_READ(block, in);
-            std::cout << block << '\n';
+            logger << block << '\n';
             Block wave;
             wave.id = block.id;
             wave.left_volume = block.left_volume;
@@ -325,7 +344,7 @@ Session load_session(std::string const &path)
 
     DWORD length{};
     read(length, file);
-    std::cout << "File length: " << length << '\n';
+    logger << "File length: " << length << '\n';
     
     EXPECT_EQ(actual_file_length, length + 8 + 4); // COOLNESS + length
 
@@ -337,9 +356,57 @@ Session load_session(std::string const &path)
     return session;
 }
 
-std::ostream &operator<<(std::ostream &os, Session const &session)
+void to_json(nlohmann::json &out, Block const &in)
 {
-    return os;
+    out = {
+        {"id", in.id},
+        {"left_volume", in.left_volume},
+        {"right_volume", in.right_volume},
+        {"offset_samples", in.offset_samples},
+        {"size_samples", in.size_samples},
+        {"wave_id", in.wave_id},
+        {"track_id", in.track_id},
+    };
+}
+
+void to_json(nlohmann::json &out, Wave const &in)
+{
+    out = {
+        {"id", in.id},
+        {"filename", in.filename},
+    };
+}
+
+void to_json(nlohmann::json &out, Track const &in)
+{
+    out = {
+        {"left_volume", in.left_volume},
+        {"right_volume", in.right_volume},
+        {"title", in.title},
+        {"mute", in.mute},
+    };
+}
+
+void to_json(nlohmann::json &out, Tempo const &in)
+{
+    out = {
+        {"beats_per_minute", in.beats_per_minute},
+        {"beats_per_bar", in.beats_per_bar},
+        {"ticks_per_beat", in.ticks_per_beat}
+    };
+}
+
+void to_json(nlohmann::json &out, Session const &in)
+{
+    out = {
+        {"sample_rate", in.sample_rate},
+        {"master_volume", in.master_volume},
+        {"filename", in.filename},
+        {"tempo", in.tempo},
+        {"tracks", in.tracks},
+        {"waves", in.waves},
+        {"blocks", in.blocks}
+    };
 }
 
 } // namespace CoolEdit
