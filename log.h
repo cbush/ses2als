@@ -5,6 +5,16 @@
 #include <iostream>
 #include <sstream>
 
+template<size_t N>
+std::ostream &operator<<(std::ostream &os, char s[N])
+{
+    for (auto &c : s)
+    {
+        os << c;
+    }
+    return os;
+}
+
 inline void format(std::ostream &os, const char *fmt)
 {
     os << fmt;

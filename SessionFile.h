@@ -25,7 +25,6 @@ struct Wave
 
 struct Track
 {
-    unsigned id;
     double left_volume;
     double right_volume;
     std::string title;
