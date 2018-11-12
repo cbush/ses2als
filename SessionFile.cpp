@@ -142,7 +142,31 @@ PACKED_STRUCT WaveBlockBlock
     DWORD previous_punch;
     DWORD next_punch;
     DWORD original_index;
+    DWORD unknown;
 };
+
+std::ostream &operator<<(std::ostream &os, WaveBlockBlock const &block)
+{
+    PUT(os, block, left_volume);
+    PUT(os, block, right_volume);
+    PUT(os, block, unused1);
+    PUT(os, block, unused2);
+    PUT(os, block, offset_samples);
+    PUT(os, block, size_samples);
+    PUT(os, block, id);
+    PUT(os, block, flags);
+    PUT(os, block, wave_id);
+    PUT(os, block, track_id);
+    PUT(os, block, parent_group);
+    PUT(os, block, unused);
+    PUT(os, block, wave_offset);
+    PUT(os, block, punch_generation);
+    PUT(os, block, previous_punch);
+    PUT(os, block, next_punch);
+    PUT(os, block, original_index);
+    PUT(os, block, unknown);
+    return os;
+}
 
 struct WaveListEntryBlock
 {
@@ -239,6 +263,7 @@ std::string read_block(Session &session, std::istream &in)
     else if (header == "FILE")
     {
         while (read_block(session, in) == "wav ");
+        return header;
     }
     else if (header == "wav ")
     {
@@ -254,10 +279,12 @@ std::string read_block(Session &session, std::istream &in)
     {
         DWORD count{};
         read(count, in);
+        std::cout << "Block count: " << count << '\n';
         for (auto i = 0; i < count; ++i)
         {
             WaveBlockBlock block;
             CHECKED_READ(block, in);
+            std::cout << block << '\n';
             Block wave;
             wave.id = block.id;
             wave.left_volume = block.left_volume;
