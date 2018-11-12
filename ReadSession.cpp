@@ -16,5 +16,5 @@ int main(int argc, char **argv) {
         return 1;
     }
     auto file = load_session(args[1]);
-    std::cout << nlohmann::json(file) << '\n';
+    std::cout << nlohmann::json(file);
 }

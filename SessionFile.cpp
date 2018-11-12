@@ -311,7 +311,8 @@ std::string read_block(Session &session, std::istream &in)
             wave.offset_samples = block.offset_samples;
             wave.size_samples = block.size_samples;
             wave.wave_id = block.wave_id;
-            wave.track_id = block.track_id;
+            wave.track = block.track_id;
+            session.blocks.push_back(std::move(wave));
         }
     }
     else
@@ -365,7 +366,7 @@ void to_json(nlohmann::json &out, Block const &in)
         {"offset_samples", in.offset_samples},
         {"size_samples", in.size_samples},
         {"wave_id", in.wave_id},
-        {"track_id", in.track_id},
+        {"track", in.track},
     };
 }
 

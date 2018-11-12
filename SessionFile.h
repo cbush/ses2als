@@ -16,7 +16,7 @@ struct Block
     unsigned offset_samples;
     unsigned size_samples;
     unsigned wave_id;
-    unsigned track_id;
+    unsigned track;
 };
 
 struct Wave

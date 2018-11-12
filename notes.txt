@@ -1,0 +1,68 @@
+FROM SES
+========
+   "tempo" : {
+      ...
+      "1" : [
+         "bpm",
+         135,
+         "beats_per_bar",
+         3,
+         ...
+      ]
+   },
+   ...
+   
+
+
+TO ALS
+======
+
+- AudioTrack id=(unique)
+- Sample > ArrangerAutomation > Events > AudioClip 
+    - Time=??
+    - CurrentStart/CurrentEnd (at Tempo=60, 1 = 1 second)
+    - Name
+    - Loop
+- remove LastModDate and DefaultDuration from SampleRef
+
+FileRef:
+<SearchHint>
+    <PathHint>
+        <RelativePathElement Dir="Users" />
+        <RelativePathElement Dir="cbush" />
+        <RelativePathElement Dir="Sync" />
+        <RelativePathElement Dir="Recording" />
+        <RelativePathElement Dir="work" />
+        <RelativePathElement Dir="gnome" />
+    </PathHint>
+</SearchHint>
+
+
+- Pan, Volume etc
+    <ArrangerAutomation>
+        <Events>
+            <FloatEvent Time="-63072000" Value="some value" />
+        </Events>
+
+
+Ableton
+  __AUDIO_TRACKS__
+  __TEMPO__
+
+AudioTrack
+  __ID__
+  __AUDIO_CLIPS__
+  __PAN__
+  __VOLUME__
+
+AudioClip
+  __TIME__
+  __CURRENT_START__
+  __CURRENT_END__
+  __NAME__
+  __COLOR_INDEX__
+  __RELATIVE_PATH_ELEMENTS__
+  __SAMPLE_FILE_NAME__
+
+RelativePathElement
+  __DIR__
