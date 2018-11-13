@@ -2,7 +2,7 @@
     <LomId Value="0" />
     <LomIdView Value="0" />
     <WarpMarkers>
-        <WarpMarker SecTime="0" BeatTime="0" />
+        <WarpMarker SecTime="__WARP_START_SEC_TIME__" BeatTime="__WARP_START_BEAT_TIME__" />
         <WarpMarker SecTime="__WARP_END_SEC_TIME__" BeatTime="__WARP_END_BEAT_TIME__" />
     </WarpMarkers>
     <MarkersGenerated Value="true" />

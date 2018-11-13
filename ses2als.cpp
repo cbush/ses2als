@@ -43,6 +43,8 @@ Keys to replace:
       __CURRENT_END__
       __LOOP_START__
       __LOOP_END__
+      __WARP_START_SEC_TIME__
+      __WARP_START_BEAT_TIME__
       __WARP_END_SEC_TIME__
       __WARP_END_BEAT_TIME__
       __NAME__
@@ -120,6 +122,17 @@ std::string get_wave_filename(Session const &session, Block const &block)
     return name.substr(name.rfind("\\") + 1); // Absolute windows path with backslashes. Just strip off the DIRNAME and hope the file will be located near the als project
 }
 
+double get_warp_sec(Session const &session, double seconds)
+{
+    auto beats = seconds_to_beats(session, seconds);
+    return beats * session.tempo.beats_per_minute;
+}
+
+double get_warp_beat(Session const &session, double seconds)
+{
+    return get_warp_sec(session, seconds) * (session.tempo.beats_per_minute / 60.0);
+}
+
 std::string generate_audio_clips_xml(Session const &session, size_t track_index)
 {
     std::string result;
@@ -133,18 +146,23 @@ std::string generate_audio_clips_xml(Session const &session, size_t track_index)
         auto xml = AUDIO_CLIP_XML;
         replace(xml, "__COLOR_INDEX__", 20);
 
-        auto start = seconds_to_beats(session, samples_to_seconds(session, block.offset_samples));
-        auto duration = samples_to_seconds(session, block.size_samples);
-        auto end = start + duration;
-        replace(xml, "__TIME__", start);
-        replace(xml, "__CURRENT_START__", start);
-        replace(xml, "__CURRENT_END__", end);
+        auto start_seconds = samples_to_seconds(session, block.offset_samples);
+        auto start_beats = seconds_to_beats(session, start_seconds);
+        auto duration_seconds = samples_to_seconds(session, block.size_samples);
+        auto duration_beats = seconds_to_beats(session, duration_seconds);
+        replace(xml, "__TIME__", start_beats);
+        replace(xml, "__CURRENT_START__", start_beats);
+        replace(xml, "__CURRENT_END__", start_beats + duration_beats);
 
-        replace(xml, "__LOOP_START__", samples_to_seconds(session, block.wave_offset_samples));
-        replace(xml, "__LOOP_END__", duration);
+        auto loop_start_sec = samples_to_seconds(session, block.wave_offset_samples);
+        replace(xml, "__LOOP_START__", loop_start_sec);
+        replace(xml, "__LOOP_END__", duration_beats);
 
-        replace(xml, "__WARP_END_SEC_TIME__", duration);
-        replace(xml, "__WARP_END_BEAT_TIME__", seconds_to_beats(session, duration));
+        // This isn't really right, but at least Live will fix it when Warp is enabled manually
+        replace(xml, "__WARP_START_SEC_TIME__", 0);
+        replace(xml, "__WARP_START_BEAT_TIME__", 0);
+        replace(xml, "__WARP_END_SEC_TIME__", 10000);
+        replace(xml, "__WARP_END_BEAT_TIME__", 10000);
 
         auto filename = get_wave_filename(session, block);
         replace(xml, "__NAME__", filename);
