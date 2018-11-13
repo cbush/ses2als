@@ -71,7 +71,8 @@
             <HasRelativePath Value="true" />
             <RelativePathType Value="1" />
             <RelativePath>
-                __RELATIVE_PATH_ELEMENTS__
+                <RelativePathElement Dir="Samples" />
+                <RelativePathElement Dir="Imported" />
             </RelativePath>
             <Name Value="__SAMPLE_FILE_NAME__" />
             <Type Value="2" />

@@ -50,11 +50,6 @@ Keys to replace:
       __NAME__
       __COLOR_INDEX__
       __SAMPLE_FILE_NAME__
-      __RELATIVE_PATH_ELEMENTS__
-
-    RelativePathElement
-      __DIR__
-
 */
 
 std::string load_string(std::string const &path)
@@ -70,7 +65,6 @@ std::string load_string(std::string const &path)
 const std::string ABLETON_XML = load_string("templates/Ableton.xml");
 const std::string AUDIO_CLIP_XML = load_string("templates/AudioClip.xml");
 const std::string AUDIO_TRACK_XML = load_string("templates/AudioTrack.xml");
-const std::string RELATIVE_PATH_ELEMENT_XML = load_string("templates/RelativePathElement.xml");
 
 void replace(std::string &out, std::string const &key, std::string const &value)
 {
@@ -167,7 +161,7 @@ std::string generate_audio_clips_xml(Session const &session, size_t track_index)
         auto filename = get_wave_filename(session, block);
         replace(xml, "__NAME__", filename);
         replace(xml, "__SAMPLE_FILE_NAME__", filename);
-        replace(xml, "__RELATIVE_PATH_ELEMENTS__", "");
+
         result += xml;
     }
     return result;
