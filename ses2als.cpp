@@ -13,12 +13,11 @@
 namespace
 {
 #if LOG
-auto &logger = std::cout;
+auto &logger = std::cerr;
 #else
 std::ofstream logger;
 #endif
-
-}
+} // namespace
 
 using namespace CoolEdit;
 
@@ -28,6 +27,7 @@ Keys to replace:
 
     Ableton
       __TEMPO__
+      __TIME_SIGNATURE__
       __AUDIO_TRACKS__
 
     AudioTrack
@@ -41,6 +41,10 @@ Keys to replace:
       __TIME__
       __CURRENT_START__
       __CURRENT_END__
+      __LOOP_START__
+      __LOOP_END__
+      __WARP_END_SEC_TIME__
+      __WARP_END_BEAT_TIME__
       __NAME__
       __COLOR_INDEX__
       __SAMPLE_FILE_NAME__
@@ -97,6 +101,11 @@ double samples_to_seconds(Session const &session, unsigned samples)
     return samples / (double)session.sample_rate;
 }
 
+double seconds_to_beats(Session const &session, double seconds)
+{
+    return seconds * (session.tempo.beats_per_minute / 60.0);
+}
+
 std::string get_wave_filename(Session const &session, Block const &block)
 {
     auto it = find_if(session.waves.begin(), session.waves.end(), [&](Wave const &wave)
@@ -108,7 +117,7 @@ std::string get_wave_filename(Session const &session, Block const &block)
         throw exception("Invalid wave: %@ for block %@", block.wave_id, block.id);
     }
     auto &name = it->filename;
-    return name.substr(name.rfind("\\") + 1); // Absolute windows path with backslashes
+    return name.substr(name.rfind("\\") + 1); // Absolute windows path with backslashes. Just strip off the DIRNAME and hope the file will be located near the als project
 }
 
 std::string generate_audio_clips_xml(Session const &session, size_t track_index)
@@ -122,14 +131,20 @@ std::string generate_audio_clips_xml(Session const &session, size_t track_index)
         }
 
         auto xml = AUDIO_CLIP_XML;
+        replace(xml, "__COLOR_INDEX__", 20);
 
-        auto start = samples_to_seconds(session, block.offset_samples);
+        auto start = seconds_to_beats(session, samples_to_seconds(session, block.offset_samples));
         auto duration = samples_to_seconds(session, block.size_samples);
         auto end = start + duration;
         replace(xml, "__TIME__", start);
         replace(xml, "__CURRENT_START__", start);
-        replace(xml, "__CURRENT_END__", 1000);
-        replace(xml, "__COLOR_INDEX__", 20);
+        replace(xml, "__CURRENT_END__", end);
+
+        replace(xml, "__LOOP_START__", samples_to_seconds(session, block.wave_offset_samples));
+        replace(xml, "__LOOP_END__", duration);
+
+        replace(xml, "__WARP_END_SEC_TIME__", duration);
+        replace(xml, "__WARP_END_BEAT_TIME__", seconds_to_beats(session, duration));
 
         auto filename = get_wave_filename(session, block);
         replace(xml, "__NAME__", filename);
@@ -170,9 +185,9 @@ int main(int argc, char **argv)
         return 1;
     }
     auto session = load_session(args[1]);
-
     auto ableton = ABLETON_XML;
-    replace(ableton, "__TEMPO__", 60);
+    replace(ableton, "__TEMPO__", session.tempo.beats_per_minute);
+    replace(ableton, "__TIME_SIGNATURE__", 197 + session.tempo.beats_per_bar);
     replace(ableton, "__AUDIO_TRACKS__", generate_audio_tracks_xml(session));
     std::cout << ableton << '\n';
 }

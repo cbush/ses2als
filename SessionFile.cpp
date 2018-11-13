@@ -11,7 +11,7 @@ namespace CoolEdit
 {
 
 #if LOG
-auto &logger = std::cout;
+auto &logger = std::cerr;
 #else
 std::ofstream logger;
 #endif
@@ -309,6 +309,7 @@ std::string read_block(Session &session, std::istream &in)
             wave.left_volume = block.left_volume;
             wave.right_volume = block.right_volume;
             wave.offset_samples = block.offset_samples;
+            wave.wave_offset_samples = block.wave_offset;
             wave.size_samples = block.size_samples;
             wave.wave_id = block.wave_id;
             wave.track = block.track_id;
@@ -364,6 +365,7 @@ void to_json(nlohmann::json &out, Block const &in)
         {"left_volume", in.left_volume},
         {"right_volume", in.right_volume},
         {"offset_samples", in.offset_samples},
+        {"wave_offset_samples", in.wave_offset_samples},
         {"size_samples", in.size_samples},
         {"wave_id", in.wave_id},
         {"track", in.track},

@@ -15,6 +15,7 @@ struct Block
     double right_volume;
     unsigned offset_samples;
     unsigned size_samples;
+    unsigned wave_offset_samples;
     unsigned wave_id;
     unsigned track;
 };

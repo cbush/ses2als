@@ -3,13 +3,14 @@
     <LomIdView Value="0" />
     <WarpMarkers>
         <WarpMarker SecTime="0" BeatTime="0" />
+        <WarpMarker SecTime="__WARP_END_SEC_TIME__" BeatTime="__WARP_END_BEAT_TIME__" />
     </WarpMarkers>
     <MarkersGenerated Value="true" />
     <CurrentStart Value="__CURRENT_START__" />
     <CurrentEnd Value="__CURRENT_END__" />
     <Loop>
-        <LoopStart Value="0" />
-        <LoopEnd Value="1000" />
+        <LoopStart Value="__LOOP_START__" />
+        <LoopEnd Value="__LOOP_END__" />
         <StartRelative Value="0" />
         <LoopOn Value="false" />
         <OutMarker Value="16" />
@@ -85,7 +86,7 @@
         <UserOnsets />
         <HasUserOnsets Value="false" />
     </Onsets>
-    <WarpMode Value="0" />
+    <WarpMode Value="1" />
     <GranularityTones Value="30" />
     <GranularityTexture Value="65" />
     <FluctuationTexture Value="25" />

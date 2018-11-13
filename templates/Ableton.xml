@@ -1911,7 +1911,7 @@
 						<LomId Value="0" />
 						<ArrangerAutomation>
 							<Events>
-								<EnumEvent Time="-63072000" Value="201" />
+								<EnumEvent Time="-63072000" Value="__TIME_SIGNATURE__" />
 							</Events>
 						</ArrangerAutomation>
 						<Manual Value="201" />
