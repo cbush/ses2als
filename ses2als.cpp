@@ -2,6 +2,8 @@
 #include "log.h"
 #include "json.hpp"
 
+#include <libgen.h>
+
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -55,6 +57,10 @@ Keys to replace:
 std::string load_string(std::string const &path)
 {
     std::ifstream in(path, std::ios::in|std::ios::ate);
+    if (!in.good())
+    {
+        throw exception("Unable to open file: %@", path);
+    }
     std::string result;
     result.reserve(in.tellg());
     in.seekg(0);
@@ -62,9 +68,7 @@ std::string load_string(std::string const &path)
     return result;
 }
 
-const std::string ABLETON_XML = load_string("templates/Ableton.xml");
-const std::string AUDIO_CLIP_XML = load_string("templates/AudioClip.xml");
-const std::string AUDIO_TRACK_XML = load_string("templates/AudioTrack.xml");
+std::string ABLETON_XML, AUDIO_CLIP_XML, AUDIO_TRACK_XML;
 
 void replace(std::string &out, std::string const &key, std::string const &value)
 {
@@ -196,6 +200,12 @@ int main(int argc, char **argv)
         std::cerr << "Usage: " << args[0] << " <path/to/sesfile>\n";
         return 1;
     }
+
+    auto dir = std::string(dirname(argv[0])) + "/..";
+    ABLETON_XML = load_string(dir + "/templates/Ableton.xml");
+    AUDIO_CLIP_XML = load_string(dir + "/templates/AudioClip.xml");
+    AUDIO_TRACK_XML = load_string(dir + "/templates/AudioTrack.xml");
+
     auto session = load_session(args[1]);
     auto ableton = ABLETON_XML;
     replace(ableton, "__TEMPO__", session.tempo.beats_per_minute);
